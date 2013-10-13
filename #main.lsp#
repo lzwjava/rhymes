@@ -1,0 +1,48 @@
+(defparameter words (make-array 250000 :fill-pointer 0))
+
+(defun main ()
+	(defvar n)
+	(time (setf n (read-word "source.txt")))
+	(time (setf words (delete-duplicates words :test #'equal :end n)))
+ 	(time (reverse-words words))
+ 	(time (sort words #'string< #'nreverse))
+ 	(time (reverse-words words))
+ 	(time (write-word "rhymes.txt")))
+
+(defmacro new-word ()
+	`(when (/= pos 0)
+		 (vector-push (string-downcase (subseq buf 0 pos)) words)
+		 (incf n)
+		 (setf pos 0)))
+
+(defun read-word (from)
+	(with-open-file (str from :direction :input)
+		(let ((pos 0)
+					(buf (make-string 100))
+					(n 0))
+			(do ((ch (read-char str 'nil :eof)
+							 (read-char str 'nil :eof)))
+					((eql ch :eof))
+				(cond ((or (alpha-char-p ch)
+									 (char= ch #\'))
+							 (setf (aref buf pos) ch)
+							 (incf pos))
+							(t
+							 (new-word))))
+			(new-word)
+			n)))
+
+(defun reverse-words (arr)
+	(let ((n (length arr)))
+		(dotimes (i n)
+			(setf (aref arr i) (reverse (aref arr i))))))
+
+(defun write-word (to)
+	(with-open-file (str to :direction :output
+											 :if-exists :supersede)
+		(let ((n (length words)))
+			(dotimes (i n)
+				(princ (aref words i) str)
+				(terpri str)))))
+
+(time (main))
